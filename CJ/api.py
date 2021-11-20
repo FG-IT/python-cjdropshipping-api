@@ -1,7 +1,9 @@
+import time
+
 import requests
+from requests.exceptions import (ConnectTimeout, ConnectionError, ReadTimeout)
+
 from .resources import CJProduct
-
-
 
 
 class APIError(Exception):
@@ -16,8 +18,9 @@ class Client:
     default_page_size = 10
     default_page_number = 1
 
-    def __init__(self, secret_key=None):
+    def __init__(self, secret_key=None, max_retries=7):
         self.secret_key = secret_key 
+        self.max_retries = max_retries
 
     def build_url(self, resource):
         return f"{self.base_url}{resource}"
@@ -28,7 +31,22 @@ class Client:
         url = self.build_url(resource)
         headers = {'CJ-Access-Token': self.secret_key}
 
-        resp = requests.post(url, json=payload, headers=headers)
+        retries = self.max_retries
+        while retries > 0:
+            try:
+                resp = requests.post(url, json=payload, headers=headers)
+                break
+            except (ConnectTimeout, ReadTimeout) as e:
+                retries -= 1
+                if retries <= 0:
+                    raise
+                else:
+                    time.sleep(1)
+            except ConnectionError as e:
+                retries -= 1
+                if retries <= 0:
+                    raise
+
         if resp.status_code == 200:
             return resp.json()
         else:
