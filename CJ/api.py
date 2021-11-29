@@ -36,7 +36,6 @@ class Client:
             try:
                 resp = requests.post(url, json=payload, headers=headers)
                 if resp.status_code >= 500:
-                    retries -= 1
                     time.slee(5)
                     continue
 
