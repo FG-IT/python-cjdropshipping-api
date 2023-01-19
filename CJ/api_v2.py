@@ -35,7 +35,7 @@ class Client:
             try:
                 resp = requests.get(url, params=payload, headers=headers)
                 if resp.status_code >= 500:
-                    time.slee(5)
+                    time.sleep(5)
                     continue
 
                 try:
